@@ -1,0 +1,30 @@
+.my_style {
+    border-collapse: collapse;
+    margin: 5px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+}
+
+.my_style thead tr {
+    background-color: #009879;
+    color: #ffffff;
+}
+
+.my_style th, td {
+    padding: 7px 10px;
+    text-align: left;
+}
+
+
+.my_style tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.my_style tbody tr:nth-of-type(even) {
+    background-color: rgba(128, 128, 128, 0.212);
+}
+
+.my_style tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}

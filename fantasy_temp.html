@@ -1,0 +1,87 @@
+<html>
+    <link rel="stylesheet" type="text/css" href="my_style.css"/>
+    <body >
+        <h1> {{title}} </h1>
+
+        <h2> Unlucky Scoring </h2>
+        First, an overview of who where "unlucky" in terms of opponent scoring. In fantasy sports, you can't control the opponents scoring, you better hope for weak performance from your opponent.
+        Only data from the "Fantasy Regular Season" games is included when computing the team scoring.
+
+        <h3>Points For</h3>
+        "Points for" is included to see who scored the most points, and can be used to compare with "Points Against".
+        {{points_for}}
+
+        <h3>Points Against</h3>
+        Overview of "Points Against".
+        {{points_against}}
+
+        <h3>Close Games</h3>
+        Top 10 of the closest games, i.e. games with the smallest difference between winning and losing team.
+        {{close_games}}
+
+        <h3>High Score and Lost Anyway</h3>
+        Top 10 of the "highest team score, but lost anyway" games.
+        {{high_score_and_lost}}
+
+        <h2> Lucky Scoring </h2>
+        Games where the wining team scores low, but the opponent scores even lower. Top 10 games with low score, but won anyway.
+        Only data from the "Fantasy Regular Season" games is included when computing the team scoring.
+        {{low_score_and_won}}
+
+        <h2> Team Injuries </h2>
+        Which teams suffered the most injuries. To keep it simple, it only includes the players which were drafted. Note, it is not possible to distunguish injuries from healthy scratches, disciplinary issues, etc., thus all missed games are considered due to injuries.
+        Only data from the "Fantasy Regular Season" games is included when computing the team scoring.
+
+        <h3>Total Weeks Missed to Injury</h3>
+        Number of missed week for the players selected in the first 5 rounds.
+        {{missed_per_team}}
+
+        <h2>The Perfect Lineup</h2>
+        If all owners choose the perfect lineup for all games, how would that affect the win-loss record.
+        {{perfect_lineup}}
+
+        <h2>Individual Player Performance</h2>
+        In this section, the performance of individual players are shown. Data from the "NFL Regular Season" games is included when computing the player scoring.
+
+        <h3>Exceeding Season Expectations</h3>
+        Top 20 of the players exceeding the season expectations. Season expectations are based on the ESPN Season Total Points Projection.
+        {{over_expectation}}
+
+        <h3>Subceeding Season Expectations</h3>
+        Top 20 of the players subceeding the season expectations. Players on IR before Week 1 have '0' in season expectations.
+        {{under_expectation}}
+
+        <h3>Top Quarter Backs</h3>
+        Top 10 QBs.
+        {{top_qb}}
+
+        <h3>Top Wide Receivers</h3>
+        Top 10 WRs.
+        {{top_wr}}
+
+        <h3>Top Running Backs</h3>
+        Top 10 RBs.
+        {{top_rb}}
+
+        <h3>Top Tight Ends</h3>
+        Top 10 TEs.
+        {{top_te}}
+
+        <h3>Top Kickers</h3>
+        Top 10 Ks.
+        {{top_kick}}
+
+        <h3>Top Defence/Special Team</h3>
+        Top 10 DSTs.
+        {{top_d}}
+
+        <br>
+
+        <footer>
+            <div class="footer">
+                All data acquired using ESPN Fantasy API: https://github.com/cwendt94/espn-api<br>
+                Generated {{generation_time}}
+            </div>
+        </footer>
+    </body>
+</html>
