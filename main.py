@@ -77,12 +77,12 @@ def get_close_games(games: DataFrame):
 
 
 def get_high_score_and_lost(games: DataFrame):
-    high_score_lost = games.sort_values(by=["Loser score"], ascending=False)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
+    high_score_lost = games[games["Winner score"] != 0].sort_values(by=["Loser score"], ascending=False)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
     return high_score_lost
 
 
 def get_low_score_and_won(games: DataFrame):
-    low_score_won = games.sort_values(by=["Winner score"], ascending=True)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
+    low_score_won = games[games["Winner score"] != 0].sort_values(by=["Winner score"], ascending=True)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
     return low_score_won
 
 
@@ -268,7 +268,7 @@ def get_perfect_score(league, lineup: list) -> float:
 def get_perfect_record(league: League) -> str:
     winners = []
     losers = []
-    for week in range(1, league.settings.reg_season_count + 1):
+    for week in range(1, min(league.settings.reg_season_count + 1, league.current_week)):
         games_in_week = league.box_scores(week=week)
         for game in games_in_week:
             home_score = get_perfect_score(league, game.home_lineup)
@@ -302,6 +302,7 @@ def get_perfect_record(league: League) -> str:
 if __name__ == "__main__":
     # Parse arguments
     parser = argparse.ArgumentParser(description='Generate HTML for ESPN fantasy football season')
+    parser.add_argument('year', type=int, help="ESPN Fantasy Year")
     parser.add_argument("--lff",
                         "--load-from-file",
                         action='store_true',
@@ -311,8 +312,8 @@ if __name__ == "__main__":
     # Creating a logger
     logger = setup_logger()
 
-    outputfile = "index.html"
-    title = "Make Football Great Again Season 2021 Stats"
+    outputfile = f"index_{args.year}.html"
+    title = f"Make Football Great Again Season {args.year} Stats"
 
     # League API
     logger.info(f"Getting League data: Started")
@@ -322,7 +323,10 @@ if __name__ == "__main__":
     else:
         with open("credentials.json", "r") as f:
             login = json.load(f)
-        league = League(league_id=274452, year=2021, espn_s2=login.get("espn_s2"), swid=login.get("swid"))
+        league = League(league_id=274452,
+                        year=args.year,
+                        espn_s2=login.get("espn_s2"),
+                        swid=login.get("swid"))
     logger.info(f"Getting League data: Done")
 
     # Compute points for and against
