@@ -11,6 +11,7 @@ import logging
 from tqdm import tqdm
 import pickle
 import json
+import concurrent.futures
 
 
 def print_team_scoring(league: League):
@@ -29,7 +30,7 @@ def print_team_scoring(league: League):
 
 def get_games(league: League):
     games = []
-    for week in range(1, league.settings.reg_season_count + 1):
+    for week in range(1, min(league.settings.reg_season_count + 1, league.current_week)):
         games_in_week = league.box_scores(week=week)
         for game in games_in_week:
             game_stats = []
@@ -77,12 +78,12 @@ def get_close_games(games: DataFrame):
 
 
 def get_high_score_and_lost(games: DataFrame):
-    high_score_lost = games[games["Winner score"] != 0].sort_values(by=["Loser score"], ascending=False)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
+    high_score_lost = games.sort_values(by=["Loser score"], ascending=False)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
     return high_score_lost
 
 
 def get_low_score_and_won(games: DataFrame):
-    low_score_won = games[games["Winner score"] != 0].sort_values(by=["Winner score"], ascending=True)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
+    low_score_won = games.sort_values(by=["Winner score"], ascending=True)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
     return low_score_won
 
 
@@ -108,7 +109,7 @@ def get_draft_class(league: DataFrame):
         player.append(pick.playerId)
         player.append(pick.team.team_name)
         player.append(pick.round_num)
-        games_played = get_games_played(player_stats, league.settings.reg_season_count)
+        games_played = get_games_played(player_stats, league.current_week)
         player.append(games_played)
         player.append(league.settings.reg_season_count - games_played)
 
@@ -149,30 +150,43 @@ def get_player_score(player_stats, num_of_weeks: int) -> int:
     return score
 
 
-def get_player_scoring(league: League):
+def get_player_scoring(player):
+    try:
+        player_id = int(player)
+    except ValueError:
+        return None
+
+    player_info = league.player_info(playerId=player_id)
+    if player_info == None:
+        return None
+
+    player_stat = []
+    if player_info.total_points == 0 and player_info.projected_total_points == 0:
+        return None
+
+    player_stat.append(player_info.name)
+    player_stat.append(player_id)
+    player_stat.append(player_info.position)
+    player_stat.append(player_info.projected_total_points)
+    player_score = get_player_score(player_info.stats, 18)
+    player_stat.append(player_score)
+    player_stat.append(player_score - player_info.projected_total_points)
+    return player_stat
+
+
+def get_all_player_scoring(league: League):
     players_stat = []
-    for player in tqdm(league.player_map):
-        try:
-            playerId = int(player)
-        except ValueError:
-            continue
+    players_processed = 0
 
-        player_info = league.player_info(playerId=playerId)
-        if player_info == None:
-            continue
-
-        player_stat = []
-        if player_info.total_points == 0 and player_info.projected_total_points == 0:
-            continue
-
-        player_stat.append(player_info.name)
-        player_stat.append(playerId)
-        player_stat.append(player_info.position)
-        player_stat.append(player_info.projected_total_points)
-        player_score = get_player_score(player_info.stats, 18)
-        player_stat.append(player_score)
-        player_stat.append(player_score - player_info.projected_total_points)
-        players_stat.extend([player_stat])
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+        future_player = {executor.submit(get_player_scoring, player): player for player in league.player_map}
+        for player_stat in concurrent.futures.as_completed(future_player):
+            players_processed += 1
+            if players_processed % 1000 == 0:
+                logger.info(f"Players processed = {players_processed} of {len(league.player_map)}")
+            if player_stat.result() is None:
+                continue
+            players_stat.extend([player_stat.result()])
 
     df = pd.DataFrame(players_stat, columns=["Player Name",
                                              "playerId",
@@ -358,7 +372,7 @@ if __name__ == "__main__":
     # Analyze over- and under-performing playsers
     logger.info(f"Getting player score data: Started")
     if not args.lff:
-        players = get_player_scoring(league)
+        players = get_all_player_scoring(league)
 
         # Store variables in file
         logger.info(f"Storing data to pickle file")
