@@ -132,4 +132,5 @@ dmypy.json
 credentials.json
 data.pkl
 log.txt
-index.html
+index_*.html
+.vscode/
