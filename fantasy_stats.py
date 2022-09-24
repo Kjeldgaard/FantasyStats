@@ -2,12 +2,34 @@
 
 import pandas as pd
 from pandas.core.frame import DataFrame
-import concurrent.futures
+from numpy import NaN
 from espn_api.football import League
 from espn_api.requests import EspnFantasyRequests
 
 class FantasyStats():
-    def __init__(self, league_id, year, espn_s2, swid, logger) -> None:
+    def __init__(
+            self,
+            league_id,
+            year,
+            espn_s2,
+            swid,
+            logger,
+            player_per_call = 1000,
+            num_qb = 1,
+            num_rb = 2,
+            num_wr = 3,
+            num_te = 1,
+            num_flex = 1,
+            num_dst = 1,
+            num_k = 1) -> None:
+        self.players_per_call = player_per_call
+        self.num_qb = num_qb
+        self.num_rb = num_rb
+        self.num_wr = num_wr
+        self.num_te = num_te
+        self.num_flex = num_flex
+        self.num_dst = num_dst
+        self.num_k = num_k
         self.logger = logger
 
         self.logger.info(f"Getting League data: Started")
@@ -17,6 +39,9 @@ class FantasyStats():
             espn_s2=espn_s2,
             swid=swid)
         self.logger.info(f"Getting League data: Done")
+
+        self.logger.info(f"Current week: {self.league.current_week}")
+        self.logger.info(f"Total weeks: {self.league.settings.reg_season_count}")
 
         self.logger.info(f"Getting player ids: Started")
         self.player_ids = self._get_player_ids(year, league_id, espn_s2, swid)
@@ -128,7 +153,8 @@ class FantasyStats():
                 if player.playerId == pick.playerId:
                     games_played = self._get_games_played(player)
             player_stats.append(games_played)
-            player_stats.append(self.league.settings.reg_season_count - games_played)
+            week_number = min(self.league.settings.reg_season_count, self.league.current_week)
+            player_stats.append(week_number - games_played)
 
             players_stats.extend([player_stats])
 
@@ -167,7 +193,7 @@ class FantasyStats():
 
     def _get_all_player_scoring(self):
         players_stats = []
-        num_lists = int((len(self.player_ids) + 99)/ 100)
+        num_lists = int((len(self.player_ids) + self.players_per_call - 1) / self.players_per_call)
         player_id_lists = [self.player_ids[i::num_lists] for i in range(num_lists)]
         for list in player_id_lists:
             players_stats.extend(self._get_player_scoring(list))
@@ -197,8 +223,10 @@ class FantasyStats():
         player_ids = players["playerId"].to_list()
         for player_id in player_ids:
             try:
-                drafted_by.append(self.draft_class[self.draft_class["playerId"] == player_id]["Team Name"].values[0])
-                draft_round.append(self.draft_class[self.draft_class["playerId"] == player_id]["Round"].values[0])
+                drafted_by.append(
+                    self.draft_class[self.draft_class["playerId"] == player_id]["Team Name"].values[0])
+                draft_round.append(
+                    self.draft_class[self.draft_class["playerId"] == player_id]["Round"].values[0])
             except IndexError:
                 drafted_by.append('-')
                 draft_round.append('-')
@@ -230,12 +258,12 @@ class FantasyStats():
                 Ks = self._insert_player_score(Ks, player.points)
 
         total_score = 0
-        QB_score, QBs = self._get_top_score(QBs, 1)
-        RB_score, RBs = self._get_top_score(RBs, 2)
-        WR_score, WRs = self._get_top_score(WRs, 3)
-        TE_score, TEs = self._get_top_score(TEs, 1)
-        DST_score, DSTs = self._get_top_score(DSTs, 1)
-        K_score, Ks = self._get_top_score(Ks, 1)
+        QB_score, QBs = self._get_top_score(QBs, self.num_qb)
+        RB_score, RBs = self._get_top_score(RBs, self.num_rb)
+        WR_score, WRs = self._get_top_score(WRs, self.num_wr)
+        TE_score, TEs = self._get_top_score(TEs, self.num_te)
+        DST_score, DSTs = self._get_top_score(DSTs, self.num_dst)
+        K_score, Ks = self._get_top_score(Ks, self.num_k)
         F_score = max(WRs + RBs + TEs)
         total_score = QB_score + RB_score + WR_score + TE_score + DST_score + K_score + F_score
         return total_score
@@ -253,7 +281,7 @@ class FantasyStats():
 
     def _get_top_score(self, scores: list, number: int):
         top_score = 0
-        for score in range(number):
+        for _ in range(number):
             top_score += scores.pop(0)
         return top_score, scores
 

@@ -2,19 +2,18 @@
 
 import argparse
 from fantasy_stats import FantasyStats
-from numpy import NaN
-import pandas as pd
 import jinja2
 from datetime import datetime
 import logging
-from tqdm import tqdm
-import pickle
 import json
 from fantasy_stats import FantasyStats
 
 
 def setup_logger():
-    formatter = logging.basicConfig(level=logging.INFO, style='{', datefmt='%Y-%m-%d %H:%M:%S', format='{asctime} {levelname} {filename}:{lineno}: {message}')
+    formatter = logging.basicConfig(
+        level=logging.INFO,
+        style='{', datefmt='%Y-%m-%d %H:%M:%S',
+        format='{asctime} {levelname} {filename}:{lineno}: {message}')
     handler = logging.FileHandler('log.txt', mode='w')
     handler.setFormatter(formatter)
     logger = logging.getLogger()
