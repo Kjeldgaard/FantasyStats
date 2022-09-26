@@ -6,22 +6,24 @@ from numpy import NaN
 from espn_api.football import League
 from espn_api.requests import EspnFantasyRequests
 
-class FantasyStats():
+
+class FantasyStats:
     def __init__(
-            self,
-            league_id,
-            year,
-            espn_s2,
-            swid,
-            logger,
-            player_per_call = 1000,
-            num_qb = 1,
-            num_rb = 2,
-            num_wr = 3,
-            num_te = 1,
-            num_flex = 1,
-            num_dst = 1,
-            num_k = 1) -> None:
+        self,
+        league_id,
+        year,
+        espn_s2,
+        swid,
+        logger,
+        player_per_call=1000,
+        num_qb=1,
+        num_rb=2,
+        num_wr=3,
+        num_te=1,
+        num_flex=1,
+        num_dst=1,
+        num_k=1,
+    ) -> None:
         self.players_per_call = player_per_call
         self.num_qb = num_qb
         self.num_rb = num_rb
@@ -33,11 +35,7 @@ class FantasyStats():
         self.logger = logger
 
         self.logger.info(f"Getting League data: Started")
-        self.league = League(
-            league_id=league_id,
-            year=year,
-            espn_s2=espn_s2,
-            swid=swid)
+        self.league = League(league_id=league_id, year=year, espn_s2=espn_s2, swid=swid)
         self.logger.info(f"Getting League data: Done")
 
         self.logger.info(f"Current week: {self.league.current_week}")
@@ -61,12 +59,14 @@ class FantasyStats():
         self.logger.info(f"Fantasy stats init: done")
 
     def _get_player_ids(self, year, league_id, espn_s2, swid):
-        cookies = {'espn_s2': espn_s2, 'SWID': swid}
-        espn_request = EspnFantasyRequests(sport='nfl', year=year, league_id=league_id, cookies=cookies)
+        cookies = {"espn_s2": espn_s2, "SWID": swid}
+        espn_request = EspnFantasyRequests(
+            sport="nfl", year=year, league_id=league_id, cookies=cookies
+        )
         pro_players = espn_request.get_pro_players()
         player_ids = []
         for player in pro_players:
-            player_ids.append(player.get('id'))
+            player_ids.append(player.get("id"))
         return player_ids
 
     def print_team_scoring(self):
@@ -78,13 +78,19 @@ class FantasyStats():
             data.append([team.team_name, team.points_for, team.points_against])
         df = pd.DataFrame(data, columns=["Team", "Points for", "Points against"])
 
-        points_for = df.sort_values(by=["Points for"], ascending=False)[["Team", "Points for"]].to_html(index=False, classes="my_style")
-        points_against = df.sort_values(by=["Points against"], ascending=False)[["Team", "Points against"]].to_html(index=False, classes="my_style")
+        points_for = df.sort_values(by=["Points for"], ascending=False)[
+            ["Team", "Points for"]
+        ].to_html(index=False, classes="my_style")
+        points_against = df.sort_values(by=["Points against"], ascending=False)[
+            ["Team", "Points against"]
+        ].to_html(index=False, classes="my_style")
         return points_for, points_against
 
     def _get_games(self):
         games = []
-        for week in range(1, min(self.league.settings.reg_season_count + 1, self.league.current_week)):
+        for week in range(
+            1, min(self.league.settings.reg_season_count + 1, self.league.current_week)
+        ):
             games_in_week = self.league.box_scores(week=week)
             for game in games_in_week:
                 game_stats = []
@@ -114,15 +120,20 @@ class FantasyStats():
 
                 games.extend([game_stats])
 
-        df = pd.DataFrame(games, columns=["Winner team",
-                                        "Winner score",
-                                        "Winner proj",
-                                        "Loser team",
-                                        "Loser score",
-                                        "Loser proj",
-                                        "Winner lineup",
-                                        "Loser lineup",
-                                        "Score diff"])
+        df = pd.DataFrame(
+            games,
+            columns=[
+                "Winner team",
+                "Winner score",
+                "Winner proj",
+                "Loser team",
+                "Loser score",
+                "Loser proj",
+                "Winner lineup",
+                "Loser lineup",
+                "Score diff",
+            ],
+        )
         return df
 
     def _get_games_played(self, player) -> int:
@@ -132,7 +143,7 @@ class FantasyStats():
             if k == 0 or k > self.league.current_week:
                 continue
 
-            if v.get('points') > 0:
+            if v.get("points") > 0:
                 games_played += 1
         return games_played
 
@@ -140,7 +151,7 @@ class FantasyStats():
         draft_ids = []
         for pick in self.league.draft:
             draft_ids.append(pick.playerId)
-        players = self.league.player_info(playerId = draft_ids)
+        players = self.league.player_info(playerId=draft_ids)
 
         players_stats = []
         for pick in self.league.draft:
@@ -153,7 +164,9 @@ class FantasyStats():
                 if player.playerId == pick.playerId:
                     games_played = self._get_games_played(player)
             player_stats.append(games_played)
-            week_number = min(self.league.settings.reg_season_count, self.league.current_week)
+            week_number = min(
+                self.league.settings.reg_season_count, self.league.current_week
+            )
             player_stats.append(week_number - games_played)
 
             players_stats.extend([player_stats])
@@ -167,11 +180,13 @@ class FantasyStats():
                 "Team Name",
                 "Round",
                 "Games Played",
-                "Games Missed"])
+                "Games Missed",
+            ],
+        )
         return df
 
     def _get_player_scoring(self, player_ids: list):
-        players = self.league.player_info(playerId = player_ids)
+        players = self.league.player_info(playerId=player_ids)
         if players == None:
             return []
 
@@ -193,17 +208,24 @@ class FantasyStats():
 
     def _get_all_player_scoring(self):
         players_stats = []
-        num_lists = int((len(self.player_ids) + self.players_per_call - 1) / self.players_per_call)
+        num_lists = int(
+            (len(self.player_ids) + self.players_per_call - 1) / self.players_per_call
+        )
         player_id_lists = [self.player_ids[i::num_lists] for i in range(num_lists)]
         for list in player_id_lists:
             players_stats.extend(self._get_player_scoring(list))
 
-        df = pd.DataFrame(players_stats, columns=["Player Name",
-                                                "playerId",
-                                                "Position",
-                                                "Projected Points",
-                                                "Total Points",
-                                                "Diff"])
+        df = pd.DataFrame(
+            players_stats,
+            columns=[
+                "Player Name",
+                "playerId",
+                "Position",
+                "Projected Points",
+                "Total Points",
+                "Diff",
+            ],
+        )
 
         return df
 
@@ -214,7 +236,7 @@ class FantasyStats():
             if k == 0 or k > num_of_weeks:
                 continue
 
-            score += v.get('points')
+            score += v.get("points")
         return score
 
     def _add_draft_info(self, players) -> DataFrame:
@@ -224,12 +246,18 @@ class FantasyStats():
         for player_id in player_ids:
             try:
                 drafted_by.append(
-                    self.draft_class[self.draft_class["playerId"] == player_id]["Team Name"].values[0])
+                    self.draft_class[self.draft_class["playerId"] == player_id][
+                        "Team Name"
+                    ].values[0]
+                )
                 draft_round.append(
-                    self.draft_class[self.draft_class["playerId"] == player_id]["Round"].values[0])
+                    self.draft_class[self.draft_class["playerId"] == player_id][
+                        "Round"
+                    ].values[0]
+                )
             except IndexError:
-                drafted_by.append('-')
-                draft_round.append('-')
+                drafted_by.append("-")
+                draft_round.append("-")
 
         players.insert(3, "Drafted by", drafted_by, True)
         players.insert(4, "Draft Round", draft_round, True)
@@ -265,7 +293,9 @@ class FantasyStats():
         DST_score, DSTs = self._get_top_score(DSTs, self.num_dst)
         K_score, Ks = self._get_top_score(Ks, self.num_k)
         F_score = max(WRs + RBs + TEs)
-        total_score = QB_score + RB_score + WR_score + TE_score + DST_score + K_score + F_score
+        total_score = (
+            QB_score + RB_score + WR_score + TE_score + DST_score + K_score + F_score
+        )
         return total_score
 
     def _insert_player_score(self, scores: list, score: float) -> list:
@@ -278,45 +308,90 @@ class FantasyStats():
         scores.append(score)
         return scores
 
-
     def _get_top_score(self, scores: list, number: int):
         top_score = 0
         for _ in range(number):
             top_score += scores.pop(0)
         return top_score, scores
 
-
     def get_close_games(self):
-        close_games = self.games.sort_values(by=["Score diff"], ascending=True)[["Winner team", "Winner score", "Loser team", "Loser score", "Score diff"]].head(10).to_html(index=False, classes="my_style")
+        close_games = (
+            self.games.sort_values(by=["Score diff"], ascending=True)[
+                [
+                    "Winner team",
+                    "Winner score",
+                    "Loser team",
+                    "Loser score",
+                    "Score diff",
+                ]
+            ]
+            .head(10)
+            .to_html(index=False, classes="my_style")
+        )
         return close_games
 
-
     def get_high_score_and_lost(self):
-        high_score_lost = self.games.sort_values(by=["Loser score"], ascending=False)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
+        high_score_lost = (
+            self.games.sort_values(by=["Loser score"], ascending=False)[
+                ["Winner team", "Winner score", "Loser team", "Loser score"]
+            ]
+            .head(10)
+            .to_html(index=False, classes="my_style")
+        )
         return high_score_lost
 
-
     def get_low_score_and_won(self):
-        low_score_won = self.games.sort_values(by=["Winner score"], ascending=True)[["Winner team", "Winner score", "Loser team", "Loser score"]].head(10).to_html(index=False, classes="my_style")
+        low_score_won = (
+            self.games.sort_values(by=["Winner score"], ascending=True)[
+                ["Winner team", "Winner score", "Loser team", "Loser score"]
+            ]
+            .head(10)
+            .to_html(index=False, classes="my_style")
+        )
         return low_score_won
 
     def print_missed_games_per_team(self):
-        return self.draft_class[self.draft_class["Round"] < 6].groupby(["Team Name"], as_index=False).sum(numeric_only=True)[["Team Name", "Games Played", "Games Missed"]].sort_values(by=["Games Missed"], ascending=False).to_html(index=False, classes="my_style")
+        return (
+            self.draft_class[self.draft_class["Round"] < 6]
+            .groupby(["Team Name"], as_index=False)
+            .sum(numeric_only=True)[["Team Name", "Games Played", "Games Missed"]]
+            .sort_values(by=["Games Missed"], ascending=False)
+            .to_html(index=False, classes="my_style")
+        )
 
     def get_expectation(self, ascending: bool):
-        top_players =  self.players.sort_values(by=["Diff"], ascending=ascending).head(20)
+        top_players = self.players.sort_values(by=["Diff"], ascending=ascending).head(
+            20
+        )
         top_players = self._add_draft_info(top_players)
-        return top_players[["Player Name", "Drafted by", "Draft Round", "Projected Points", "Total Points", "Diff"]].to_html(index=False, classes="my_style")
+        return top_players[
+            [
+                "Player Name",
+                "Drafted by",
+                "Draft Round",
+                "Projected Points",
+                "Total Points",
+                "Diff",
+            ]
+        ].to_html(index=False, classes="my_style")
 
     def get_top_players(self, position: str) -> str:
-        top_players = self.players[self.players["Position"].str.match(position)].sort_values(by=["Total Points"], ascending=False).head(10)
+        top_players = (
+            self.players[self.players["Position"].str.match(position)]
+            .sort_values(by=["Total Points"], ascending=False)
+            .head(10)
+        )
         top_players = self._add_draft_info(top_players)
-        return top_players[["Player Name", "Drafted by", "Draft Round", "Total Points"]].to_html(index=False, classes="my_style")
+        return top_players[
+            ["Player Name", "Drafted by", "Draft Round", "Total Points"]
+        ].to_html(index=False, classes="my_style")
 
     def get_perfect_record(self) -> str:
         winners = []
         losers = []
-        for week in range(1, min(self.league.settings.reg_season_count + 1, self.league.current_week)):
+        for week in range(
+            1, min(self.league.settings.reg_season_count + 1, self.league.current_week)
+        ):
             games_in_week = self.league.box_scores(week=week)
             for game in games_in_week:
                 home_score = self._get_perfect_score(game.home_lineup)
@@ -339,9 +414,8 @@ class FantasyStats():
             team_record.append(wins_perfect - team.wins)
             standings.extend([team_record])
 
-        df = pd.DataFrame(standings, columns=["Team",
-                                            "Record",
-                                            "Perfect Record",
-                                            "Diff"])
+        df = pd.DataFrame(
+            standings, columns=["Team", "Record", "Perfect Record", "Diff"]
+        )
 
         return df.to_html(index=False, classes="my_style")
