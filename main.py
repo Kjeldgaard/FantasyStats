@@ -12,9 +12,11 @@ from fantasy_stats import FantasyStats
 def setup_logger():
     formatter = logging.basicConfig(
         level=logging.INFO,
-        style='{', datefmt='%Y-%m-%d %H:%M:%S',
-        format='{asctime} {levelname} {filename}:{lineno}: {message}')
-    handler = logging.FileHandler('log.txt', mode='w')
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {levelname} {filename}:{lineno}: {message}",
+    )
+    handler = logging.FileHandler("log.txt", mode="w")
     handler.setFormatter(formatter)
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -24,8 +26,10 @@ def setup_logger():
 
 if __name__ == "__main__":
     # Parse arguments
-    parser = argparse.ArgumentParser(description='Generate HTML for ESPN fantasy football season')
-    parser.add_argument('year', type=int, help="ESPN Fantasy Year")
+    parser = argparse.ArgumentParser(
+        description="Generate HTML for ESPN fantasy football season"
+    )
+    parser.add_argument("year", type=int, help="ESPN Fantasy Year")
     args = parser.parse_args()
 
     # Creating a logger
@@ -42,7 +46,8 @@ if __name__ == "__main__":
         year=args.year,
         espn_s2=login.get("espn_s2"),
         swid=login.get("swid"),
-        logger=logger)
+        logger=logger,
+    )
 
     # Compute points for and against
     points_for, points_against = fantasy_stats.print_team_scoring()
@@ -75,26 +80,30 @@ if __name__ == "__main__":
     perfect_lineup = fantasy_stats.get_perfect_record()
 
     now = datetime.now()
-    template = jinja2.Environment(loader=jinja2.FileSystemLoader('./')).get_template('fantasy_temp.html')
-    output = template.render(title=title,
-                             points_for=points_for,
-                             points_against=points_against,
-                             close_games=close_games,
-                             high_score_and_lost=high_score_and_lost,
-                             low_score_and_won=low_score_and_won,
-                             missed_per_team=missed_per_team,
-                             over_expectation=over_expectation,
-                             under_expectation=under_expectation,
-                             top_qb=top_qb,
-                             top_wr=top_wr,
-                             top_rb=top_rb,
-                             top_te=top_te,
-                             top_kick=top_kick,
-                             top_d=top_d,
-                             perfect_lineup=perfect_lineup,
-                             generation_time=now.strftime("%Y-%m-%d %H:%M"))
+    template = jinja2.Environment(loader=jinja2.FileSystemLoader("./")).get_template(
+        "fantasy_temp.html"
+    )
+    output = template.render(
+        title=title,
+        points_for=points_for,
+        points_against=points_against,
+        close_games=close_games,
+        high_score_and_lost=high_score_and_lost,
+        low_score_and_won=low_score_and_won,
+        missed_per_team=missed_per_team,
+        over_expectation=over_expectation,
+        under_expectation=under_expectation,
+        top_qb=top_qb,
+        top_wr=top_wr,
+        top_rb=top_rb,
+        top_te=top_te,
+        top_kick=top_kick,
+        top_d=top_d,
+        perfect_lineup=perfect_lineup,
+        generation_time=now.strftime("%Y-%m-%d %H:%M"),
+    )
 
-    with open(outputfile,'w') as f:
+    with open(outputfile, "w") as f:
         f.write(output)
         logger.info(f"Write to output file")
 
