@@ -4,7 +4,6 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from numpy import NaN
 from espn_api.football import League
-from espn_api.requests import EspnFantasyRequests
 
 
 class FantasyStats:
@@ -42,7 +41,7 @@ class FantasyStats:
         self.logger.info(f"Total weeks: {self.league.settings.reg_season_count}")
 
         self.logger.info(f"Getting player ids: Started")
-        self.player_ids = self._get_player_ids(year, league_id, espn_s2, swid)
+        self.player_ids = self._get_player_ids()
         self.logger.info(f"Getting player ids: Done")
 
         self.logger.info(f"Getting games: Started")
@@ -58,12 +57,8 @@ class FantasyStats:
         self.logger.info(f"Getting player score data: Done")
         self.logger.info(f"Fantasy stats init: done")
 
-    def _get_player_ids(self, year, league_id, espn_s2, swid):
-        cookies = {"espn_s2": espn_s2, "SWID": swid}
-        espn_request = EspnFantasyRequests(
-            sport="nfl", year=year, league_id=league_id, cookies=cookies
-        )
-        pro_players = espn_request.get_pro_players()
+    def _get_player_ids(self):
+        pro_players = self.league.espn_request.get_pro_players()
         player_ids = []
         for player in pro_players:
             player_ids.append(player.get("id"))
