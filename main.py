@@ -27,7 +27,17 @@ def setup_logger():
     return logger
 
 
-def main(credentials: Path, year: int, qb: int, rb: int, wr: int, te: int, flex: int, dst: int, k: int):
+def main(
+    credentials: Path,
+    year: int,
+    qb: int,
+    rb: int,
+    wr: int,
+    te: int,
+    flex: int,
+    dst: int,
+    k: int,
+):
     # Creating a logger
     logger = setup_logger()
 
@@ -37,7 +47,7 @@ def main(credentials: Path, year: int, qb: int, rb: int, wr: int, te: int, flex:
     # League API
     try:
         with open(credentials, "r") as f:
-                login = json.load(f)
+            login = json.load(f)
     except FileNotFoundError:
         sys.exit(f"Credentials file {credentials.absolute()} not found")
 
@@ -128,7 +138,8 @@ if __name__ == "__main__":
         "--credentials",
         type=Path,
         default="credentials.json",
-        help="ESPN Credentials file contaning 'league_id', 'espn_s2' and 'swid'")
+        help="ESPN Credentials file contaning 'league_id', 'espn_s2' and 'swid'",
+    )
     parser.add_argument("--qb", type=int, default=1, help="Number of QBs on team")
     parser.add_argument("--rb", type=int, default=2, help="Number of RBs on team")
     parser.add_argument("--wr", type=int, default=3, help="Number of WRs on team")
