@@ -15,22 +15,22 @@ class FantasyStats:
         swid,
         logger,
         player_per_call=1000,
-        num_qb=1,
-        num_rb=2,
-        num_wr=3,
-        num_te=1,
-        num_flex=1,
-        num_dst=1,
-        num_k=1,
+        qb=1,
+        rb=2,
+        wr=3,
+        te=1,
+        flex=1,
+        dst=1,
+        k=1,
     ) -> None:
         self.players_per_call = player_per_call
-        self.num_qb = num_qb
-        self.num_rb = num_rb
-        self.num_wr = num_wr
-        self.num_te = num_te
-        self.num_flex = num_flex
-        self.num_dst = num_dst
-        self.num_k = num_k
+        self.num_qb = qb
+        self.num_rb = rb
+        self.num_wr = wr
+        self.num_te = te
+        self.num_flex = flex
+        self.num_dst = dst
+        self.num_k = k
         self.logger = logger
 
         self.logger.info(f"Getting League data: Started")
