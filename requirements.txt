@@ -1,6 +1,6 @@
-certifi==2022.9.14
+certifi==2022.9.24
 charset-normalizer==2.1.1
-espn-api==0.22.1
+espn-api==0.23.0
 idna==3.4
 Jinja2==3.1.2
 MarkupSafe==2.1.1
