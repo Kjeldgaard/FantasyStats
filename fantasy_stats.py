@@ -37,31 +37,33 @@ class FantasyStats:
         self.league = League(league_id=league_id, year=year, espn_s2=espn_s2, swid=swid)
         self.logger.info(f"Getting League data: Done")
 
+        self.team_map = self._get_team_map()
+
         self.logger.info(f"Current week: {self.league.current_week}")
         self.logger.info(f"Total weeks: {self.league.settings.reg_season_count}")
 
-        self.logger.info(f"Getting player ids: Started")
         self.player_ids = self._get_player_ids()
-        self.logger.info(f"Getting player ids: Done")
 
-        self.logger.info(f"Getting games: Started")
         self.games = self._get_games()
-        self.logger.info(f"Getting games: Started")
 
-        self.logger.info(f"Getting draft class: Started")
         self.draft_class = self._get_draft_class()
-        self.logger.info(f"Getting draft class: Done")
 
-        self.logger.info(f"Getting player score data: Started")
         self.players = self._get_all_player_scoring()
-        self.logger.info(f"Getting player score data: Done")
         self.logger.info(f"Fantasy stats init: done")
 
+    def _get_team_map(self):
+        self.logger.info(f"Generating team id mapping: Started")
+        team_map = {team.team_id: team.team_name for team in self.league.teams}
+        self.logger.info(f"Generating team id mapping: Done")
+        return team_map
+
     def _get_player_ids(self):
+        self.logger.info(f"Getting player ids: Started")
         pro_players = self.league.espn_request.get_pro_players()
         player_ids = []
         for player in pro_players:
             player_ids.append(player.get("id"))
+        self.logger.info(f"Getting player ids: Done")
         return player_ids
 
     def print_team_scoring(self):
@@ -82,6 +84,7 @@ class FantasyStats:
         return points_for, points_against
 
     def _get_games(self):
+        self.logger.info(f"Getting games: Started")
         games = []
         for week in range(
             1, min(self.league.settings.reg_season_count + 1, self.league.current_week)
@@ -129,6 +132,7 @@ class FantasyStats:
                 "Score diff",
             ],
         )
+        self.logger.info(f"Getting games: Done")
         return df
 
     def _get_games_played(self, player) -> int:
@@ -143,6 +147,7 @@ class FantasyStats:
         return games_played
 
     def _get_draft_class(self):
+        self.logger.info(f"Getting draft class: Started")
         draft_ids = []
         for pick in self.league.draft:
             draft_ids.append(pick.playerId)
@@ -178,6 +183,7 @@ class FantasyStats:
                 "Games Missed",
             ],
         )
+        self.logger.info(f"Getting draft class: Done")
         return df
 
     def _get_player_scoring(self, player_ids: list):
@@ -193,6 +199,7 @@ class FantasyStats:
             player_stats = []
             player_stats.append(player.name)
             player_stats.append(player.playerId)
+            player_stats.append(self.team_map.get(player.onTeamId, "-"))
             player_stats.append(player.position)
             player_stats.append(player.projected_total_points)
             player_score = self._get_player_score(player.stats, 18)
@@ -202,6 +209,7 @@ class FantasyStats:
         return players_stats
 
     def _get_all_player_scoring(self):
+        self.logger.info(f"Getting player score data: Started")
         players_stats = []
         num_lists = int(
             (len(self.player_ids) + self.players_per_call - 1) / self.players_per_call
@@ -215,13 +223,14 @@ class FantasyStats:
             columns=[
                 "Player Name",
                 "playerId",
+                "Current Team",
                 "Position",
                 "Projected Points",
                 "Total Points",
                 "Diff",
             ],
         )
-
+        self.logger.info(f"Getting player score data: Done")
         return df
 
     def _get_player_score(self, player_stats, num_of_weeks: int) -> int:
@@ -364,6 +373,7 @@ class FantasyStats:
                 "Player Name",
                 "Drafted by",
                 "Draft Round",
+                "Current Team",
                 "Projected Points",
                 "Total Points",
                 "Diff",
@@ -378,7 +388,7 @@ class FantasyStats:
         )
         top_players = self._add_draft_info(top_players)
         return top_players[
-            ["Player Name", "Drafted by", "Draft Round", "Total Points"]
+            ["Player Name", "Drafted by", "Draft Round", "Current Team", "Total Points"]
         ].to_html(index=False, classes="my_style")
 
     def get_perfect_record(self) -> str:
