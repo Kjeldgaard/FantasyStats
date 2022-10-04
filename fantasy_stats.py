@@ -49,7 +49,7 @@ class FantasyStats:
         self.draft_class = self._get_draft_class()
 
         self.players = self._get_all_player_scoring()
-        self.logger.info(f"Fantasy stats init: done")
+        self.logger.info(f"Fantasy stats init: Done")
 
     def _get_team_map(self):
         self.logger.info(f"Generating team id mapping: Started")
@@ -197,7 +197,10 @@ class FantasyStats:
                 continue
 
             player_stats = []
-            player_stats.append(player.name)
+            if player.proTeam != "None":
+                player_stats.append(f"{player.name} ({player.proTeam})")
+            else:
+                player_stats.append(f"{player.name} (-)")
             player_stats.append(player.playerId)
             player_stats.append(self.team_map.get(player.onTeamId, "-"))
             player_stats.append(player.position)
