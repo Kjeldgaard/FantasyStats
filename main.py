@@ -78,8 +78,8 @@ def main(
     low_score_and_won = fantasy_stats.get_low_score_and_won()
 
     # Top 5 draft pick games
-    # missed_per_team = fantasy_stats.print_missed_games_per_team()
     player_injuries = fantasy_stats.print_player_injuries()
+    team_injuries = fantasy_stats.print_missed_games_per_team()
 
     # Analyze over- and under-performing playsers
     over_expectation = fantasy_stats.get_expectation(False)
@@ -108,6 +108,7 @@ def main(
         high_score_and_lost=high_score_and_lost,
         low_score_and_won=low_score_and_won,
         player_injuries=player_injuries,
+        team_injuries=team_injuries,
         over_expectation=over_expectation,
         under_expectation=under_expectation,
         top_qb=top_qb,
