@@ -49,6 +49,7 @@ class FantasyStats:
         self.draft_class = self._get_draft_class()
 
         self.players = self._get_all_player_scoring()
+
         self.logger.info(f"Fantasy stats init: Done")
 
     def _get_team_map(self):
@@ -65,6 +66,13 @@ class FantasyStats:
             player_ids.append(player.get("id"))
         self.logger.info(f"Getting player ids: Done")
         return player_ids
+
+    def print_player_injuries(self):
+        injured_players = self.draft_class[self.draft_class["Games Missed"] > 0]
+        injured_key_players = injured_players[injured_players["Round"] < 6].sort_values(
+            by=["Round", "Games Missed"], ascending=[True, False]
+        )[["Player Name", "Team Name", "Round", "Games Played", "Games Missed"]]
+        return injured_key_players.to_html(index=False, classes="my_style")
 
     def print_team_scoring(self):
         """Prints the top scoring team in descending order"""
@@ -142,7 +150,7 @@ class FantasyStats:
             if k == 0 or k > self.league.current_week:
                 continue
 
-            if v.get("points") > 0:
+            if len(v.get("breakdown")) > 0:
                 games_played += 1
         return games_played
 
@@ -155,15 +163,16 @@ class FantasyStats:
 
         players_stats = []
         for pick in self.league.draft:
-            player_stats = []
-            player_stats.append(pick.playerName)
-            player_stats.append(pick.playerId)
-            player_stats.append(pick.team.team_name)
-            player_stats.append(pick.round_num)
             for player in players:
                 if player.playerId == pick.playerId:
+                    player_stats = []
+                    player_stats.append(f"{pick.playerName} ({player.proTeam})")
+                    player_stats.append(pick.playerId)
+                    player_stats.append(pick.team.team_name)
+                    player_stats.append(pick.round_num)
                     games_played = self._get_games_played(player)
-            player_stats.append(games_played)
+                    player_stats.append(games_played)
+                    break
             week_number = min(
                 self.league.settings.reg_season_count, self.league.current_week
             )
@@ -205,7 +214,7 @@ class FantasyStats:
             player_stats.append(self.team_map.get(player.onTeamId, "-"))
             player_stats.append(player.position)
             player_stats.append(player.projected_total_points)
-            player_score = self._get_player_score(player.stats, 18)
+            player_score = self._get_player_score(player.stats)
             player_stats.append(player_score)
             player_stats.append(player_score - player.projected_total_points)
             players_stats.append(player_stats)
@@ -236,11 +245,11 @@ class FantasyStats:
         self.logger.info(f"Getting player score data: Done")
         return df
 
-    def _get_player_score(self, player_stats, num_of_weeks: int) -> int:
+    def _get_player_score(self, player_stats) -> int:
         score = 0
         for k, v in player_stats.items():
             # Week 0 corresponds to 'Total'
-            if k == 0 or k > num_of_weeks:
+            if k == 0 or k > self.league.current_week:
                 continue
 
             score += v.get("points")
