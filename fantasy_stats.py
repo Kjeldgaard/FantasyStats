@@ -42,6 +42,8 @@ class FantasyStats:
         self.logger.info(f"Current week: {self.league.current_week}")
         self.logger.info(f"Total weeks: {self.league.settings.reg_season_count}")
 
+        self.finished_weeks = self._get_finished_weeks()
+
         self.player_ids = self._get_player_ids()
 
         self.games = self._get_games()
@@ -173,10 +175,8 @@ class FantasyStats:
                     games_played = self._get_games_played(player)
                     player_stats.append(games_played)
                     break
-            week_number = min(
-                self.league.settings.reg_season_count, self.league.current_week
-            )
-            player_stats.append(week_number - games_played)
+
+            player_stats.append(self.finished_weeks - games_played)
 
             players_stats.extend([player_stats])
 
@@ -436,3 +436,7 @@ class FantasyStats:
         )
 
         return df.to_html(index=False, classes="my_style")
+
+    def _get_finished_weeks(self):
+        team = self.league.teams[0]
+        return team.wins + team.losses + team.ties
