@@ -149,7 +149,7 @@ class FantasyStats:
         games_played = 0
         for k, v in player.stats.items():
             # Week 0 corresponds to 'Total'
-            if k == 0 or k > self.league.current_week:
+            if k == 0 or k > self.finished_weeks:
                 continue
 
             if len(v.get("breakdown")) > 0:
