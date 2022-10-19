@@ -4,6 +4,7 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from numpy import NaN
 from espn_api.football import League
+import requests
 
 
 class FantasyStats:
@@ -32,12 +33,14 @@ class FantasyStats:
         self.num_dst = dst
         self.num_k = k
         self.logger = logger
+        self.year = year
 
         self.logger.info(f"Getting League data: Started")
         self.league = League(league_id=league_id, year=year, espn_s2=espn_s2, swid=swid)
         self.logger.info(f"Getting League data: Done")
 
         self.team_map = self._get_team_map()
+        self.team_bye = self._get_team_byes()
 
         self.logger.info(f"Current week: {self.league.current_week}")
         self.logger.info(f"Total weeks: {self.league.settings.reg_season_count}")
@@ -53,6 +56,19 @@ class FantasyStats:
         self.players = self._get_all_player_scoring()
 
         self.logger.info(f"Fantasy stats init: Done")
+
+    def _get_team_byes(self):
+        bye_week_map = {}
+        res = requests.get(
+            "https://fantasy.espn.com/apis/v3/games/ffl/seasons/2022?view=proTeamSchedules_wl"
+        )
+        if res.ok:
+            teams = res.json().get("settings").get("proTeams")
+            bye_week_map = {team["abbrev"].upper(): team["byeWeek"] for team in teams}
+            bye_week_map.update({"OAK": bye_week_map.get("LV")})
+        else:
+            self.logger.warn("Could not get team bye weeks")
+        return bye_week_map
 
     def _get_team_map(self):
         self.logger.info(f"Generating team id mapping: Started")
@@ -176,8 +192,13 @@ class FantasyStats:
                     player_stats.append(games_played)
                     break
 
-            player_stats.append(self.finished_weeks - games_played)
-
+            if len(self.team_bye) > 0:
+                if self.team_bye.get(player.proTeam) > self.finished_weeks:
+                    player_stats.append(self.finished_weeks - games_played)
+                else:
+                    player_stats.append(self.finished_weeks - games_played - 1)
+            else:
+                player_stats.append(self.finished_weeks - games_played)
             players_stats.extend([player_stats])
 
         # print(games)
@@ -214,9 +235,8 @@ class FantasyStats:
             player_stats.append(self.team_map.get(player.onTeamId, "-"))
             player_stats.append(player.position)
             player_stats.append(player.projected_total_points)
-            player_score = self._get_player_score(player.stats)
-            player_stats.append(player_score)
-            player_stats.append(player_score - player.projected_total_points)
+            player_stats.append(player.total_points)
+            player_stats.append(player.total_points - player.projected_total_points)
             players_stats.append(player_stats)
         return players_stats
 
@@ -244,16 +264,6 @@ class FantasyStats:
         )
         self.logger.info(f"Getting player score data: Done")
         return df
-
-    def _get_player_score(self, player_stats) -> int:
-        score = 0
-        for k, v in player_stats.items():
-            # Week 0 corresponds to 'Total'
-            if k == 0 or k > self.league.current_week:
-                continue
-
-            score += v.get("points")
-        return score
 
     def _add_draft_info(self, players) -> DataFrame:
         drafted_by = []
