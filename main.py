@@ -65,6 +65,9 @@ def main(
         k=k,
     )
 
+    # Get league overview
+    league_overview = fantasy_stats.get_league_overview()
+
     # Compute points for and against
     points_for, points_against = fantasy_stats.print_team_scoring()
 
@@ -102,6 +105,7 @@ def main(
     )
     output = template.render(
         title=title,
+        league_overview=league_overview,
         points_for=points_for,
         points_against=points_against,
         close_games=close_games,

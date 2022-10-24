@@ -235,8 +235,9 @@ class FantasyStats:
             player_stats.append(self.team_map.get(player.onTeamId, "-"))
             player_stats.append(player.position)
             player_stats.append(player.projected_total_points)
-            player_stats.append(player.total_points)
-            player_stats.append(player.total_points - player.projected_total_points)
+            player_score = self._get_player_score(player.stats)
+            player_stats.append(player_score)
+            player_stats.append(player_score - player.projected_total_points)
             players_stats.append(player_stats)
         return players_stats
 
@@ -264,6 +265,15 @@ class FantasyStats:
         )
         self.logger.info(f"Getting player score data: Done")
         return df
+
+    def _get_player_score(self, player_stats) -> int:
+        score = 0
+        for week in player_stats.keys():
+            if week == 0:
+                # Week 0 corresponds to 'Total'
+                continue
+            score += player_stats[week].get("points")
+        return score
 
     def _add_draft_info(self, players) -> DataFrame:
         drafted_by = []
@@ -443,10 +453,42 @@ class FantasyStats:
 
         df = pd.DataFrame(
             standings, columns=["Team", "Record", "Perfect Record", "Diff"]
-        )
+        ).sort_values(by=["Perfect Record"], ascending=False)
 
         return df.to_html(index=False, classes="my_style")
 
     def _get_finished_weeks(self):
         team = self.league.teams[0]
         return team.wins + team.losses + team.ties
+
+    def get_league_overview(self):
+        league_overview = []
+        for team in self.league.teams:
+            team_info = []
+            team_info.append(f"{team.team_name} ({team.team_abbrev})")
+            team_info.append(team.standing)
+            team_info.append(team.playoff_pct)
+            team_info.append(team.division_name)
+            team_info.append(f"{team.wins}-{team.losses}-{team.ties}")
+            team_info.append(team.points_for)
+            team_info.append(team.points_against)
+            team_info.append(team.acquisitions)
+            team_info.append(team.owner)
+            league_overview.extend([team_info])
+
+        df = pd.DataFrame(
+            league_overview,
+            columns=[
+                "Team",
+                "Standing",
+                "Playoff %",
+                "Division",
+                "Record",
+                "Points for",
+                "Points against",
+                "Transactions",
+                "Owner",
+            ],
+        ).sort_values(by=["Standing"], ascending=True)
+
+        return df.to_html(index=False, classes="my_style")
