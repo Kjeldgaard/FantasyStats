@@ -5,6 +5,7 @@ from pandas.core.frame import DataFrame
 from numpy import NaN
 from espn_api.football import League
 import requests
+from natsort import natsort_keygen
 
 
 class FantasyStats:
@@ -66,6 +67,7 @@ class FantasyStats:
             teams = res.json().get("settings").get("proTeams")
             bye_week_map = {team["abbrev"].upper(): team["byeWeek"] for team in teams}
             bye_week_map.update({"OAK": bye_week_map.get("LV")})
+            bye_week_map.update({"None": 0})
         else:
             self.logger.warn("Could not get team bye weeks")
         return bye_week_map
@@ -453,7 +455,7 @@ class FantasyStats:
 
         df = pd.DataFrame(
             standings, columns=["Team", "Record", "Perfect Record", "Diff"]
-        ).sort_values(by=["Perfect Record"], ascending=False)
+        ).sort_values(by=["Perfect Record"], key=natsort_keygen(), ascending=False)
 
         return df.to_html(index=False, classes="my_style")
 
