@@ -349,7 +349,11 @@ class FantasyStats:
     def _get_top_score(self, scores: list, number: int):
         top_score = 0
         for _ in range(number):
-            top_score += scores.pop(0)
+            try:
+                top_score += scores.pop(0)
+            except IndexError:
+                # Skip if list is empty
+                continue
         return top_score, scores
 
     def get_close_games(self):
