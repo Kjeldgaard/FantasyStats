@@ -52,11 +52,20 @@ class FantasyStats:
 
         self.games = self._get_games()
 
+        self._get_team_owner()
+
         self.draft_class = self._get_draft_class()
 
         self.players = self._get_all_player_scoring()
 
         self.logger.info(f"Fantasy stats init: Done")
+
+    def _get_team_owner(self):
+        self._team_owner_map = {}
+        for member in self.league.members:
+            id = member.get('id')
+            name = f"{member.get('firstName')} {member.get('lastName')}"
+            self._team_owner_map[id] = name
 
     def _get_team_byes(self):
         bye_week_map = {}
@@ -473,13 +482,14 @@ class FantasyStats:
             team_info = []
             team_info.append(f"{team.team_name} ({team.team_abbrev})")
             team_info.append(team.standing)
-            team_info.append(team.playoff_pct)
+            team_info.append(f"{team.playoff_pct:.2f}")
             team_info.append(team.division_name)
             team_info.append(f"{team.wins}-{team.losses}-{team.ties}")
             team_info.append(team.points_for)
             team_info.append(team.points_against)
             team_info.append(team.acquisitions)
-            team_info.append(team.owner)
+            owners = [self._team_owner_map[owner] for owner in team.owners]
+            team_info.append(", ".join(owners))
             league_overview.extend([team_info])
 
         df = pd.DataFrame(
