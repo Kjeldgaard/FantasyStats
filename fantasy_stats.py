@@ -43,10 +43,11 @@ class FantasyStats:
         self.team_map = self._get_team_map()
         self.team_bye = self._get_team_byes()
 
-        self.logger.info(f"Current week: {self.league.current_week}")
-        self.logger.info(f"Total weeks: {self.league.settings.reg_season_count}")
-
         self.finished_weeks = self._get_finished_weeks()
+
+        self.logger.info(f"Finished week: {self.finished_weeks}")
+        self.logger.info(f"Current week: {self.league.current_week}")
+        self.logger.info(f"Regular season weeks: {self.league.settings.reg_season_count}")
 
         self.player_ids = self._get_player_ids()
 
@@ -439,8 +440,11 @@ class FantasyStats:
         ].to_html(index=False, classes="my_style")
 
     def get_perfect_record(self) -> str:
-        winners = []
-        losers = []
+        winners_perfect = []
+        losers_perfect = []
+        winners_actual = []
+        losers_actual = []
+
         for week in range(
             1, min(self.league.settings.reg_season_count + 1, self.league.current_week)
         ):
@@ -449,21 +453,31 @@ class FantasyStats:
                 home_score = self._get_perfect_score(game.home_lineup)
                 away_score = self._get_perfect_score(game.away_lineup)
                 if home_score > away_score:
-                    winners.append(game.home_team.team_name)
-                    losers.append(game.away_team.team_name)
+                    winners_perfect.append(game.home_team.team_name)
+                    losers_perfect.append(game.away_team.team_name)
                 else:
-                    losers.append(game.home_team.team_name)
-                    winners.append(game.away_team.team_name)
+                    losers_perfect.append(game.home_team.team_name)
+                    winners_perfect.append(game.away_team.team_name)
+
+                if game.home_score > game.away_score:
+                    winners_actual.append(game.home_team.team_name)
+                    losers_actual.append(game.away_team.team_name)
+                else:
+                    losers_actual.append(game.home_team.team_name)
+                    winners_actual.append(game.away_team.team_name)
+
 
         standings = []
         for team in self.league.teams:
+            wins_perfect = winners_perfect.count(team.team_name)
+            losses_perfect = losers_perfect.count(team.team_name)
+            wins_actual = winners_actual.count(team.team_name)
+            losses_actual = losers_actual.count(team.team_name)
             team_record = []
             team_record.append(team.team_name)
-            team_record.append(f"{team.wins}-{team.losses}")
-            wins_perfect = winners.count(team.team_name)
-            losses_perfect = losers.count(team.team_name)
+            team_record.append(f"{wins_actual}-{losses_actual}")
             team_record.append(f"{wins_perfect}-{losses_perfect}")
-            team_record.append(wins_perfect - team.wins)
+            team_record.append(wins_perfect - wins_actual)
             standings.extend([team_record])
 
         df = pd.DataFrame(
@@ -474,7 +488,7 @@ class FantasyStats:
 
     def _get_finished_weeks(self):
         team = self.league.teams[0]
-        return team.wins + team.losses + team.ties
+        return sum(x > 0 for x in team.scores)
 
     def get_league_overview(self):
         league_overview = []
