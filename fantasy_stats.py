@@ -502,7 +502,7 @@ class FantasyStats:
             team_info.append(team.points_for)
             team_info.append(team.points_against)
             team_info.append(team.acquisitions)
-            owners = [self._team_owner_map[owner] for owner in team.owners]
+            owners = [self._team_owner_map[owner.get('id')] for owner in team.owners]
             team_info.append(", ".join(owners))
             league_overview.extend([team_info])
 
