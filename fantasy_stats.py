@@ -41,7 +41,6 @@ class FantasyStats:
         self.logger.info(f"Getting League data: Done")
 
         self.team_map = self._get_team_map()
-        self.team_bye = self._get_team_byes()
 
         self.finished_weeks = self._get_finished_weeks()
 
@@ -67,20 +66,6 @@ class FantasyStats:
             id = member.get('id')
             name = f"{member.get('firstName')} {member.get('lastName')}"
             self._team_owner_map[id] = name
-
-    def _get_team_byes(self):
-        bye_week_map = {}
-        res = requests.get(
-            "https://fantasy.espn.com/apis/v3/games/ffl/seasons/2022?view=proTeamSchedules_wl"
-        )
-        if res.ok:
-            teams = res.json().get("settings").get("proTeams")
-            bye_week_map = {team["abbrev"].upper(): team["byeWeek"] for team in teams}
-            bye_week_map.update({"OAK": bye_week_map.get("LV")})
-            bye_week_map.update({"None": 0})
-        else:
-            self.logger.warn("Could not get team bye weeks")
-        return bye_week_map
 
     def _get_team_map(self):
         self.logger.info(f"Generating team id mapping: Started")
@@ -184,6 +169,9 @@ class FantasyStats:
                 games_played += 1
         return games_played
 
+    def _had_bye_week(self, player) -> bool:
+        return (self.finished_weeks > len(player.stats.items()) - 1)
+
     def _get_draft_class(self):
         self.logger.info(f"Getting draft class: Started")
         draft_ids = []
@@ -202,15 +190,11 @@ class FantasyStats:
                     player_stats.append(pick.round_num)
                     games_played = self._get_games_played(player)
                     player_stats.append(games_played)
+                    if self._had_bye_week(player):
+                        player_stats.append(self.finished_weeks - games_played - 1)
+                    else:
+                        player_stats.append(self.finished_weeks - games_played)
                     break
-
-            if len(self.team_bye) > 0:
-                if self.team_bye.get(player.proTeam) > self.finished_weeks:
-                    player_stats.append(self.finished_weeks - games_played)
-                else:
-                    player_stats.append(self.finished_weeks - games_played - 1)
-            else:
-                player_stats.append(self.finished_weeks - games_played)
             players_stats.extend([player_stats])
 
         # print(games)
