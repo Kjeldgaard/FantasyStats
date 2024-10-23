@@ -4,7 +4,6 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from numpy import nan
 from espn_api.football import League
-import requests
 from natsort import natsort_keygen
 
 
