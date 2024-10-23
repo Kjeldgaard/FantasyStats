@@ -2,7 +2,7 @@
 
 import pandas as pd
 from pandas.core.frame import DataFrame
-from numpy import NaN
+from numpy import nan
 from espn_api.football import League
 import requests
 from natsort import natsort_keygen
@@ -135,7 +135,7 @@ class FantasyStats:
                     game_stats.append(game.away_lineup)
 
                 if game.home_score == 0 and game.away_score == 0:
-                    game_stats.append(NaN)
+                    game_stats.append(nan)
                 else:
                     game_stats.append(abs(game.home_score - game.away_score))
 
