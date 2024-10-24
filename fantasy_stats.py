@@ -35,9 +35,9 @@ class FantasyStats:
         self.logger = logger
         self.year = year
 
-        self.logger.info(f"Getting League data: Started")
+        self.logger.info("Getting League data: Started")
         self.league = League(league_id=league_id, year=year, espn_s2=espn_s2, swid=swid)
-        self.logger.info(f"Getting League data: Done")
+        self.logger.info("Getting League data: Done")
 
         self.team_map = self._get_team_map()
 
@@ -45,7 +45,9 @@ class FantasyStats:
 
         self.logger.info(f"Finished week: {self.finished_weeks}")
         self.logger.info(f"Current week: {self.league.current_week}")
-        self.logger.info(f"Regular season weeks: {self.league.settings.reg_season_count}")
+        self.logger.info(
+            f"Regular season weeks: {self.league.settings.reg_season_count}"
+        )
 
         self.player_ids = self._get_player_ids()
 
@@ -57,28 +59,28 @@ class FantasyStats:
 
         self.players = self._get_all_player_scoring()
 
-        self.logger.info(f"Fantasy stats init: Done")
+        self.logger.info("Fantasy stats init: Done")
 
     def _get_team_owner(self):
         self._team_owner_map = {}
         for member in self.league.members:
-            id = member.get('id')
+            id = member.get("id")
             name = f"{member.get('firstName')} {member.get('lastName')}"
             self._team_owner_map[id] = name
 
     def _get_team_map(self):
-        self.logger.info(f"Generating team id mapping: Started")
+        self.logger.info("Generating team id mapping: Started")
         team_map = {team.team_id: team.team_name for team in self.league.teams}
-        self.logger.info(f"Generating team id mapping: Done")
+        self.logger.info("Generating team id mapping: Done")
         return team_map
 
     def _get_player_ids(self):
-        self.logger.info(f"Getting player ids: Started")
+        self.logger.info("Getting player ids: Started")
         pro_players = self.league.espn_request.get_pro_players()
         player_ids = []
         for player in pro_players:
             player_ids.append(player.get("id"))
-        self.logger.info(f"Getting player ids: Done")
+        self.logger.info("Getting player ids: Done")
         return player_ids
 
     def print_player_injuries(self):
@@ -106,7 +108,7 @@ class FantasyStats:
         return points_for, points_against
 
     def _get_games(self):
-        self.logger.info(f"Getting games: Started")
+        self.logger.info("Getting games: Started")
         games = []
         for week in range(
             1, min(self.league.settings.reg_season_count + 1, self.league.current_week)
@@ -154,7 +156,7 @@ class FantasyStats:
                 "Score diff",
             ],
         )
-        self.logger.info(f"Getting games: Done")
+        self.logger.info("Getting games: Done")
         return df
 
     def _get_games_played(self, player) -> int:
@@ -169,10 +171,10 @@ class FantasyStats:
         return games_played
 
     def _had_bye_week(self, player) -> bool:
-        return (self.finished_weeks > len(player.stats.items()) - 1)
+        return self.finished_weeks > len(player.stats.items()) - 1
 
     def _get_draft_class(self):
-        self.logger.info(f"Getting draft class: Started")
+        self.logger.info("Getting draft class: Started")
         draft_ids = []
         for pick in self.league.draft:
             draft_ids.append(pick.playerId)
@@ -208,12 +210,12 @@ class FantasyStats:
                 "Games Missed",
             ],
         )
-        self.logger.info(f"Getting draft class: Done")
+        self.logger.info("Getting draft class: Done")
         return df
 
     def _get_player_scoring(self, player_ids: list):
         players = self.league.player_info(playerId=player_ids)
-        if players == None:
+        if players is None:
             return []
 
         players_stats = []
@@ -237,7 +239,7 @@ class FantasyStats:
         return players_stats
 
     def _get_all_player_scoring(self):
-        self.logger.info(f"Getting player score data: Started")
+        self.logger.info("Getting player score data: Started")
         players_stats = []
         num_lists = int(
             (len(self.player_ids) + self.players_per_call - 1) / self.players_per_call
@@ -258,7 +260,7 @@ class FantasyStats:
                 "Diff",
             ],
         )
-        self.logger.info(f"Getting player score data: Done")
+        self.logger.info("Getting player score data: Done")
         return df
 
     def _get_player_score(self, player_stats) -> int:
@@ -449,7 +451,6 @@ class FantasyStats:
                     losers_actual.append(game.home_team.team_name)
                     winners_actual.append(game.away_team.team_name)
 
-
         standings = []
         for team in self.league.teams:
             wins_perfect = winners_perfect.count(team.team_name)
@@ -485,7 +486,7 @@ class FantasyStats:
             team_info.append(team.points_for)
             team_info.append(team.points_against)
             team_info.append(team.acquisitions)
-            owners = [self._team_owner_map[owner.get('id')] for owner in team.owners]
+            owners = [self._team_owner_map[owner.get("id")] for owner in team.owners]
             team_info.append(", ".join(owners))
             league_overview.extend([team_info])
 

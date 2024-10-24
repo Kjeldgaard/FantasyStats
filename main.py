@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from email.policy import default
 import sys
 import argparse
 from pathlib import Path
@@ -9,7 +8,6 @@ import jinja2
 from datetime import datetime
 import logging
 import json
-from fantasy_stats import FantasyStats
 
 
 def setup_logger():
@@ -127,9 +125,9 @@ def main(
 
     with open(outputfile, "w") as f:
         f.write(output)
-        logger.info(f"Write to output file")
+        logger.info("Write to output file")
 
-    logger.info(f"Script completed")
+    logger.info("Script completed")
 
 
 if __name__ == "__main__":
