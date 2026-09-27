@@ -47,7 +47,7 @@ def main(
         with open(credentials, "r") as f:
             login = json.load(f)
     except FileNotFoundError:
-        sys.exit(f"Credentials file {credentials.absolute()} not found")
+        raise SystemError(f"Credentials file {credentials.absolute()} not found")
 
     fantasy_stats = FantasyStats(
         league_id=login.get("league_id"),
