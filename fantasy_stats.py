@@ -231,7 +231,15 @@ class FantasyStats:
             player_stats.append(player.playerId)
             player_stats.append(self.team_map.get(player.onTeamId, "-"))
             player_stats.append(player.position)
-            projected_total_point_per_week = round(100 * player.projected_total_points * min(self.finished_weeks, self.league.settings.reg_season_count) / self.league.settings.reg_season_count) / 100
+            projected_total_point_per_week = (
+                round(
+                    100
+                    * player.projected_total_points
+                    * min(self.finished_weeks, self.league.settings.reg_season_count)
+                    / self.league.settings.reg_season_count
+                )
+                / 100
+            )
             player_stats.append(projected_total_point_per_week)
             player_score = self._get_player_score(player.stats)
             player_stats.append(player_score)
